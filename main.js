@@ -345,19 +345,12 @@ function onMouseClick(event) {
 window.addEventListener('click', onMouseClick);
 
 // Animate Camera
-let cameraAngle = 0;
-function animateCamera() {
-  cameraAngle += 0.005;
-  camera.position.x = 15 * Math.cos(cameraAngle);
-  camera.position.z = 15 * Math.sin(cameraAngle);
-  camera.lookAt(0, 5, 0);
-}
+
 
 // Animation function
 function animate() {
   requestAnimationFrame(animate);
   controls.update(); // Required for OrbitControls damping
-	animateCamera();
   renderer.render(scene, camera);
 }
 
