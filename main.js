@@ -423,6 +423,59 @@ navbar.style.padding = '0 20px';
 navbar.innerHTML = '<h2>Lecture Scheduler</h2>';
 document.body.appendChild(navbar);
 
+// Get references to the input and cards container
+const subjectInput = document.getElementById('subject-input');
+const divisionInput = document.getElementById('division-input');
+const addLectureBtn1 = document.getElementById('add-lecture-btn1');
+const lectureCardsContainer = document.getElementById('lecture-cards-container');
+
+// Function to create a new lecture card
+function createLectureCard(subject, division) {
+  const card = document.createElement('div');
+  card.className = 'lecture-card';
+
+  const subjectText = document.createElement('span');
+  subjectText.textContent = subject;
+
+  const divisionText = document.createElement('span');
+  divisionText.textContent = `Division: ${division}`;
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = 'Remove';
+  closeBtn.addEventListener('click', () => {
+    lectureCardsContainer.removeChild(card);
+  });
+
+  card.appendChild(subjectText);
+  card.appendChild(divisionText);
+  card.appendChild(closeBtn);
+  return card;
+}
+
+// Add event listener to the "Add Lecture" button
+addLectureBtn1.addEventListener('click', () => {
+  const subject = subjectInput.value.trim();
+  const division = divisionInput.value.trim();
+  if (subject && division) {
+    const card = createLectureCard(subject, division);
+    lectureCardsContainer.appendChild(card);
+    subjectInput.value = ''; // Clear the input field
+    divisionInput.value = ''; // Clear the input field
+  }
+});
+
+// Allow pressing "Enter" to add a lecture
+subjectInput.addEventListener('keypress', (event) => {
+  if (event.key === 'Enter') {
+    addLectureBtn1.click();
+  }
+});
+
+divisionInput.addEventListener('keypress', (event) => {
+  if (event.key === 'Enter') {
+    addLectureBtn1.click();
+  }
+});
 
 // Start the animation loop
 animate();
