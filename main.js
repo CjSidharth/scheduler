@@ -21,6 +21,20 @@ uiContainer.style.padding = '10px';
 uiContainer.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.5)';
 document.body.appendChild(uiContainer);
 
+// Schedule button
+const scheduleBtn = document.createElement('button');
+scheduleBtn.textContent = 'Schedule Lectures';
+scheduleBtn.style.padding = '5px 10px';
+scheduleBtn.style.background = '#007bff';
+scheduleBtn.style.color = 'white';
+scheduleBtn.style.border = 'none';
+scheduleBtn.style.borderRadius = '5px';
+scheduleBtn.style.cursor = 'pointer';
+scheduleBtn.style.margin = '10px auto';
+scheduleBtn.style.display = 'block';
+scheduleBtn.addEventListener('click', scheduleLectures);
+uiContainer.appendChild(scheduleBtn);
+
 // Title for UI
 const uiTitle = document.createElement('h3');
 uiTitle.textContent = 'Building Floor Plan';
@@ -187,7 +201,7 @@ for (let floor = 0; floor < totalFloors; floor++) {
       isSelected: false,
       name: `Room ${index + 1}`,
       capacity: Math.floor(Math.random() * 30) + 20, // Random capacity between 20-50
-      status: Math.random() > 0.5 ? 'Available' : 'Occupied'
+      status: 'Available'
     };
     
     building.add(roomMesh);
@@ -367,48 +381,75 @@ window.addEventListener('resize', () => {
 createFloorPlanElements();
 
 // Start the animation loop
-// Get references to the input and cards container
-const lectureInput = document.getElementById('lecture-input');
+// Get references to the dock inputs and container
+const subjectInput = document.getElementById('subject-input');
+const divisionInput = document.getElementById('division-input');
 const addLectureBtn = document.getElementById('add-lecture-btn');
-const cardsContainer = document.getElementById('cards');
+const lectureCardsContainer = document.getElementById('lecture-cards');
+
+let lectures = []; // Store lectures for scheduling
 
 // Function to create a new lecture card
-function createLectureCard(subject) {
+function createLectureCard(subject, division, room = null) {
   const card = document.createElement('div');
   card.className = 'lecture-card';
 
-  const subjectText = document.createElement('span');
-  subjectText.textContent = subject;
+  const lectureText = document.createElement('span');
+  lectureText.textContent = room 
+    ? `${subject} (${division}) - Floor ${room.userData.floor + 1}, ${room.userData.name}` 
+    : `${subject} (${division})`;
 
   const closeBtn = document.createElement('button');
   closeBtn.textContent = 'Close';
   closeBtn.addEventListener('click', () => {
-    cardsContainer.removeChild(card);
+    if (room && room.userData.isSelected) {
+      selectRoom(room); // Deselect the room
+    }
+    lectureCardsContainer.removeChild(card);
+    lectures = lectures.filter(l => l.card !== card); // Remove from lectures array
   });
 
-  card.appendChild(subjectText);
+  card.appendChild(lectureText);
   card.appendChild(closeBtn);
+  
+  // Store lecture data
+  const lectureData = { subject, division, room, card };
+  lectures.push(lectureData);
+  
   return card;
 }
 
 // Add event listener to the "Add Lecture" button
 addLectureBtn.addEventListener('click', () => {
-  const subject = lectureInput.value.trim();
-  if (subject) {
-    const card = createLectureCard(subject);
-    cardsContainer.appendChild(card);
-    lectureInput.value = ''; // Clear the input field
+  const subject = subjectInput.value.trim();
+  const division = divisionInput.value.trim();
+  if (subject && division) {
+    let selectedRoom = selectedRooms.length > 0 ? selectedRooms[selectedRooms.length - 1] : null;
+    if (selectedRoom && selectedRoom.userData.status !== 'Available') {
+      alert('Selected room is not available!');
+      return;
+    }
+    const card = createLectureCard(subject, division, selectedRoom);
+    lectureCardsContainer.appendChild(card);
+    if (selectedRoom) {
+      selectedRoom.userData.status = 'Occupied';
+      selectRoom(selectedRoom); // Update UI
+      selectRoom(selectedRoom); // Keep highlighted
+    }
+    subjectInput.value = '';
+    divisionInput.value = '';
   }
 });
 
 // Allow pressing "Enter" to add a lecture
-lectureInput.addEventListener('keypress', (event) => {
-  if (event.key === 'Enter') {
-    addLectureBtn.click();
-  }
+subjectInput.addEventListener('keypress', (event) => {
+  if (event.key === 'Enter') addLectureBtn.click();
+});
+divisionInput.addEventListener('keypress', (event) => {
+  if (event.key === 'Enter') addLectureBtn.click();
 });
 
-// Create a navbar
+// Create a navbar (unchanged)
 const navbar = document.createElement('div');
 navbar.style.position = 'absolute';
 navbar.style.top = '0';
@@ -423,59 +464,104 @@ navbar.style.padding = '0 20px';
 navbar.innerHTML = '<h2>Lecture Scheduler</h2>';
 document.body.appendChild(navbar);
 
-// Get references to the input and cards container
-const subjectInput = document.getElementById('subject-input');
-const divisionInput = document.getElementById('division-input');
-const addLectureBtn1 = document.getElementById('add-lecture-btn1');
-const lectureCardsContainer = document.getElementById('lecture-cards-container');
+// Store path lines for cleanup
+let pathLines = [];
 
-// Function to create a new lecture card
-function createLectureCard(subject, division) {
-  const card = document.createElement('div');
-  card.className = 'lecture-card';
+// Function to create a text label in 3D space
+function createTextLabel(text, position) {
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  canvas.width = 256;
+  canvas.height = 128;
+  context.fillStyle = 'rgba(255, 255, 255, 0.8)';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = 'black';
+  context.font = 'bold 20px Arial';
+  context.textAlign = 'center';
+  context.fillText(text, canvas.width / 2, canvas.height / 2);
 
-  const subjectText = document.createElement('span');
-  subjectText.textContent = subject;
-
-  const divisionText = document.createElement('span');
-  divisionText.textContent = `Division: ${division}`;
-
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = 'Remove';
-  closeBtn.addEventListener('click', () => {
-    lectureCardsContainer.removeChild(card);
-  });
-
-  card.appendChild(subjectText);
-  card.appendChild(divisionText);
-  card.appendChild(closeBtn);
-  return card;
+  const texture = new THREE.Texture(canvas);
+  texture.needsUpdate = true;
+  const material = new THREE.SpriteMaterial({ map: texture });
+  const sprite = new THREE.Sprite(material);
+  sprite.position.copy(position);
+  sprite.scale.set(2, 1, 1);
+  return sprite;
 }
 
-// Add event listener to the "Add Lecture" button
-addLectureBtn1.addEventListener('click', () => {
-  const subject = subjectInput.value.trim();
-  const division = divisionInput.value.trim();
-  if (subject && division) {
-    const card = createLectureCard(subject, division);
-    lectureCardsContainer.appendChild(card);
-    subjectInput.value = ''; // Clear the input field
-    divisionInput.value = ''; // Clear the input field
+// Scheduling algorithm
+function scheduleLectures() {
+  if (lectures.length === 0) {
+    alert('No lectures to schedule!');
+    return;
   }
-});
 
-// Allow pressing "Enter" to add a lecture
-subjectInput.addEventListener('keypress', (event) => {
-  if (event.key === 'Enter') {
-    addLectureBtn1.click();
-  }
-});
+  // Clear previous path and labels
+  pathLines.forEach(line => scene.remove(line));
+  pathLines = [];
+  rooms.forEach(room => {
+    if (room.userData.label) {
+      scene.remove(room.userData.label);
+      room.userData.label = null;
+    }
+    room.userData.status = 'Available'; // Reset status
+  });
 
-divisionInput.addEventListener('keypress', (event) => {
-  if (event.key === 'Enter') {
-    addLectureBtn1.click();
+  // Sort lectures by division to group students
+  lectures.sort((a, b) => a.division.localeCompare(b.division));
+
+  // Assign rooms to minimize floor distance
+  let scheduledLectures = [];
+  let availableRooms = rooms.filter(r => r.userData.status === 'Available');
+  let lastFloor = null;
+
+  lectures.forEach((lecture, index) => {
+    if (!availableRooms.length) {
+      alert('Not enough available rooms!');
+      return;
+    }
+
+    // Prioritize room on the same or nearest floor
+    let bestRoom = availableRooms.reduce((best, current) => {
+      const bestDist = lastFloor !== null ? Math.abs(best.userData.floor - lastFloor) : Infinity;
+      const currDist = lastFloor !== null ? Math.abs(current.userData.floor - lastFloor) : Infinity;
+      return currDist < bestDist ? current : best;
+    }, availableRooms[0]);
+
+    bestRoom.userData.status = 'Occupied';
+    bestRoom.userData.isSelected = true;
+    bestRoom.material.color.setHex(0xff0000);
+    lecture.room = bestRoom;
+    scheduledLectures.push({ ...lecture, sequence: index + 1 });
+    lastFloor = bestRoom.userData.floor;
+    availableRooms = availableRooms.filter(r => r !== bestRoom);
+
+    // Update lecture card
+    lecture.card.firstChild.textContent = `${lecture.subject} (${lecture.division}) - Floor ${bestRoom.userData.floor + 1}, ${bestRoom.userData.name}`;
+
+    // Add label to 3D scene
+    const labelPos = bestRoom.position.clone().add(new THREE.Vector3(0, 1.5, 0));
+    const labelText = `${lecture.subject} (${lecture.division})`;
+    const label = createTextLabel(labelText, labelPos);
+    scene.add(label);
+    bestRoom.userData.label = label;
+  });
+
+  // Create path between lectures
+  scheduledLectures.sort((a, b) => a.sequence - b.sequence);
+  for (let i = 0; i < scheduledLectures.length - 1; i++) {
+    const start = scheduledLectures[i].room.position.clone();
+    const end = scheduledLectures[i + 1].room.position.clone();
+    const pathGeometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+    const pathMaterial = new THREE.LineBasicMaterial({ color: 0xffff00, linewidth: 2 });
+    const pathLine = new THREE.Line(pathGeometry, pathMaterial);
+    scene.add(pathLine);
+    pathLines.push(pathLine);
   }
-});
+
+  // Update UI
+  createFloorPlanElements();
+}
 
 // Start the animation loop
 animate();
