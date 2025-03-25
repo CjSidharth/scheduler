@@ -255,33 +255,48 @@ floorSelect.addEventListener('change', () => {
 let selectedRooms = [];
 
 function selectRoom(roomMesh) {
-  if (!roomMesh.userData.isSelected && roomMesh.userData.status === 'Available') {
-    roomMesh.userData.isSelected = true;
-    roomMesh.material.color.setHex(0xff0000);
-    selectedRooms.push(roomMesh);
-  } else if (roomMesh.userData.isSelected) {
-    roomMesh.userData.isSelected = false;
-    if (roomMesh.userData.status === 'Available') {
-      roomMesh.material.color.setHex(roomMesh.userData.originalColor);
-    }
-    selectedRooms = selectedRooms.filter(room => room !== roomMesh);
+  // If there's a currently selected room, deselect it first
+  if (currentlySelected && currentlySelected !== roomMesh) {
+    currentlySelected.userData.isSelected = false;
+    currentlySelected.material.color.setHex(
+      currentlySelected.userData.status === 'Available' ? 
+      0x00ff00 : 0xff0000
+    );
   }
 
-  if (selectedRooms.length > 0) {
+  // Toggle selection state
+  if (!roomMesh.userData.isSelected) {
+    roomMesh.userData.isSelected = true;
+    roomMesh.material.color.setHex(0xffff00); // Yellow for selection
+    currentlySelected = roomMesh;
+    selectedRooms = [roomMesh];
+  } else {
+    roomMesh.userData.isSelected = false;
+    roomMesh.material.color.setHex(
+      roomMesh.userData.status === 'Available' ? 
+      0x00ff00 : 0xff0000
+    );
+    currentlySelected = null;
+    selectedRooms = [];
+  }
+
+  // Update room info display
+  if (roomMesh.userData.isSelected) {
     roomInfoDisplay.style.display = 'block';
-    roomInfoDisplay.innerHTML = selectedRooms.map(room => `
-      <strong>Floor ${room.userData.floor + 1}, ${room.userData.name}</strong><br>
-      Capacity: ${room.userData.capacity} people<br>
-      Status: <span style="color: ${room.userData.status === 'Available' ? 'green' : 'red'}">
-        ${room.userData.status}
+    roomInfoDisplay.innerHTML = `
+      <strong>Floor ${roomMesh.userData.floor + 1}, ${roomMesh.userData.name}</strong><br>
+      Capacity: ${roomMesh.userData.capacity} people<br>
+      Status: <span style="color: ${roomMesh.userData.status === 'Available' ? 'green' : 'red'}">
+        ${roomMesh.userData.status}
       </span>
-    `).join('<hr>');
+    `;
   } else {
     roomInfoDisplay.style.display = 'none';
   }
 
   createFloorPlanElements();
 }
+
 
 function onMouseClick(event) {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -375,7 +390,7 @@ addLectureBtn.addEventListener('click', () => {
   const subject = subjectInput.value.trim();
   const division = divisionInput.value.trim();
   if (subject && division) {
-    let selectedRoom = selectedRooms.length > 0 ? selectedRooms[selectedRooms.length - 1] : null;
+    let selectedRoom = currentlySelected; // Use currentlySelected instead of selectedRooms array
     if (selectedRoom && selectedRoom.userData.status !== 'Available') {
       alert('Selected room is not available!');
       return;
@@ -384,8 +399,10 @@ addLectureBtn.addEventListener('click', () => {
     lectureCardsContainer.appendChild(card);
     if (selectedRoom) {
       selectedRoom.userData.status = 'Occupied';
+      selectedRoom.userData.isSelected = false;
       selectedRoom.material.color.setHex(0xff0000);
-      selectedRooms = selectedRooms.filter(r => r !== selectedRoom);
+      currentlySelected = null;
+      selectedRooms = [];
     }
     subjectInput.value = '';
     divisionInput.value = '';
