@@ -3,29 +3,37 @@
 
 <head>
   <title>Scheduler</title>
-
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta charset="UTF-8" />
-
   <link rel="icon" href="/assets/schedule.png" type="image/x-icon">
-
   <link href="/style.css" rel="stylesheet" type="text/css">
-
   <script type="module" src="./main.js"></script>
 </head>
 
 <body>
-
   <div id="cards"></div>
-</div>
-<div id="lecture-dock">
-  <div id="input-container">
-    <input type="text" id="subject-input" placeholder="Enter subject name">
-    <input type="text" id="division-input" placeholder="Enter division (e.g., A, B)">
-    <button id="add-lecture-btn">Add Lecture</button>
+  <div id="lecture-dock">
+    <div id="input-container">
+      <input type="text" id="subject-input" placeholder="Enter subject name">
+      <select id="division-select">
+        <option value="D1">D1</option>
+        <option value="D2">D2</option>
+      </select>
+      <select id="lecture-select">
+        <option value="Lecture 1">Lecture 1</option>
+        <option value="Lecture 2">Lecture 2</option>
+        <option value="Lecture 3">Lecture 3</option>
+        <option value="Lecture 4">Lecture 4</option>
+      </select>
+      <button id="add-lecture-btn">Add Lecture</button>
+    </div>
+    <div id="division-config">
+      <label for="division-count">Number of Divisions: </label>
+      <input type="number" id="division-count" min="1" value="2" style="width: 50px;">
+      <button id="update-divisions-btn">Update Divisions</button>
+    </div>
+    <div id="lecture-cards"></div>
   </div>
-  <div id="lecture-cards"></div>
-</div>
-
 </body>
+
 </html>

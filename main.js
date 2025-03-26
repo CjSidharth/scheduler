@@ -255,7 +255,6 @@ floorSelect.addEventListener('change', () => {
 let selectedRooms = [];
 
 function selectRoom(roomMesh) {
-  // If there's a currently selected room, deselect it first
   if (currentlySelected && currentlySelected !== roomMesh) {
     currentlySelected.userData.isSelected = false;
     currentlySelected.material.color.setHex(
@@ -264,7 +263,6 @@ function selectRoom(roomMesh) {
     );
   }
 
-  // Toggle selection state
   if (!roomMesh.userData.isSelected) {
     roomMesh.userData.isSelected = true;
     roomMesh.material.color.setHex(0xffff00); // Yellow for selection
@@ -280,7 +278,6 @@ function selectRoom(roomMesh) {
     selectedRooms = [];
   }
 
-  // Update room info display
   if (roomMesh.userData.isSelected) {
     roomInfoDisplay.style.display = 'block';
     roomInfoDisplay.innerHTML = `
@@ -296,7 +293,6 @@ function selectRoom(roomMesh) {
 
   createFloorPlanElements();
 }
-
 
 function onMouseClick(event) {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -330,17 +326,47 @@ window.addEventListener('resize', () => {
 
 createFloorPlanElements();
 
+// Lecture dock elements
 const subjectInput = document.getElementById('subject-input');
-const divisionInput = document.getElementById('division-input');
+const divisionSelect = document.getElementById('division-select');
+const lectureSelect = document.getElementById('lecture-select');
 const addLectureBtn = document.getElementById('add-lecture-btn');
 const lectureCardsContainer = document.getElementById('lecture-cards');
+const divisionCountInput = document.getElementById('division-count');
+const updateDivisionsBtn = document.getElementById('update-divisions-btn');
 
 let lectures = window.lectureStore;
+
+// Function to update division dropdown options
+function updateDivisionOptions(count) {
+  divisionSelect.innerHTML = '';
+  for (let i = 1; i <= count; i++) {
+    const option = document.createElement('option');
+    option.value = `D${i}`;
+    option.textContent = `D${i}`;
+    divisionSelect.appendChild(option);
+  }
+}
+
+// Initial setup with default number of divisions (2)
+updateDivisionOptions(parseInt(divisionCountInput.value));
+
+// Update divisions when button clicked
+updateDivisionsBtn.addEventListener('click', () => {
+  const newCount = parseInt(divisionCountInput.value);
+  if (newCount >= 1) {
+    updateDivisionOptions(newCount);
+  } else {
+    alert('Please enter a number greater than or equal to 1.');
+    divisionCountInput.value = 1;
+    updateDivisionOptions(1);
+  }
+});
 
 // Load saved lectures on page load
 window.addEventListener('load', () => {
   lectures.forEach(lecture => {
-    const card = createLectureCard(lecture.subject, lecture.division, lecture.room);
+    const card = createLectureCard(lecture.subject, lecture.division, lecture.lecture, lecture.room);
     lectureCardsContainer.appendChild(card);
     if (lecture.room) {
       const room = rooms.find(r => r.userData.floor === lecture.room.userData.floor && r.userData.room === lecture.room.userData.room);
@@ -353,14 +379,14 @@ window.addEventListener('load', () => {
   createFloorPlanElements();
 });
 
-function createLectureCard(subject, division, room = null) {
+function createLectureCard(subject, division, lecture, room = null) {
   const card = document.createElement('div');
   card.className = 'lecture-card';
 
   const lectureText = document.createElement('span');
   lectureText.textContent = room 
-    ? `${subject} (${division}) - Floor ${room.userData.floor + 1}, ${room.userData.name}` 
-    : `${subject} (${division})`;
+    ? `${subject} (${division}) - ${lecture} - Floor ${room.userData.floor + 1}, ${room.userData.name}` 
+    : `${subject} (${division}) - ${lecture}`;
 
   const closeBtn = document.createElement('button');
   closeBtn.textContent = 'Close';
@@ -379,7 +405,7 @@ function createLectureCard(subject, division, room = null) {
   card.appendChild(lectureText);
   card.appendChild(closeBtn);
   
-  const lectureData = { subject, division, room, card };
+  const lectureData = { subject, division, lecture, room, card };
   lectures.push(lectureData);
   window.lectureStore = lectures;
   
@@ -388,14 +414,15 @@ function createLectureCard(subject, division, room = null) {
 
 addLectureBtn.addEventListener('click', () => {
   const subject = subjectInput.value.trim();
-  const division = divisionInput.value.trim();
-  if (subject && division) {
-    let selectedRoom = currentlySelected; // Use currentlySelected instead of selectedRooms array
+  const division = divisionSelect.value;
+  const lecture = lectureSelect.value;
+  if (subject && division && lecture) {
+    let selectedRoom = currentlySelected;
     if (selectedRoom && selectedRoom.userData.status !== 'Available') {
       alert('Selected room is not available!');
       return;
     }
-    const card = createLectureCard(subject, division, selectedRoom);
+    const card = createLectureCard(subject, division, lecture, selectedRoom);
     lectureCardsContainer.appendChild(card);
     if (selectedRoom) {
       selectedRoom.userData.status = 'Occupied';
@@ -405,15 +432,11 @@ addLectureBtn.addEventListener('click', () => {
       selectedRooms = [];
     }
     subjectInput.value = '';
-    divisionInput.value = '';
     createFloorPlanElements();
   }
 });
 
 subjectInput.addEventListener('keypress', (event) => {
-  if (event.key === 'Enter') addLectureBtn.click();
-});
-divisionInput.addEventListener('keypress', (event) => {
   if (event.key === 'Enter') addLectureBtn.click();
 });
 
@@ -504,10 +527,10 @@ function scheduleLectures() {
     scheduledLectures.push({ ...lecture, sequence: index + 1 });
     availableRooms = availableRooms.filter(r => r !== bestRoom);
 
-    lecture.card.firstChild.textContent = `${lecture.subject} (${lecture.division}) - Floor ${bestRoom.userData.floor + 1}, ${bestRoom.userData.name}`;
+    lecture.card.firstChild.textContent = `${lecture.subject} (${lecture.division}) - ${lecture.lecture} - Floor ${bestRoom.userData.floor + 1}, ${bestRoom.userData.name}`;
 
     const labelPos = bestRoom.position.clone().add(new THREE.Vector3(0, 1.5, 0));
-    const labelText = `${lecture.subject} (${lecture.division})`;
+    const labelText = `${lecture.subject} (${lecture.division}) - ${lecture.lecture}`;
     const label = createTextLabel(labelText, labelPos);
     scene.add(label);
     bestRoom.userData.label = label;

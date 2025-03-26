@@ -1,175 +1,144 @@
 body {
-    /* remove margins and scroll bars */
-    margin: 0;
-    overflow: hidden;
-  
-    /* style text */
-    text-align: center;
-    font-size: 12px;
-    font-family: Sans-Serif;
-  
-    /* color text */
-    color: #444;
-  }
-  
-  h1 {
-    /* position the heading */
-    position: absolute;
-    width: 100%;
-  
-    /* make sure that the heading is drawn on top */
-    z-index: 1;
-  }
-  
-  #scene-container {
-    /* tell our scene container to take up the full page */
-    position: absolute;
-    width: 100%;
-    height: 100%;
-  
-    /*
-      Set the container's background color to the same as the scene's
-      background to prevent flashing on load
-    */
-    background-color: skyblue;
-  }
-  #lecture-cards-container {
-    position: absolute;
-    top: 80px;
-    right: 1100px;
-    background: rgba(255, 255, 255, 0.8);
-    padding: 10px;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-  
-  #input-container {
-    margin-bottom: 10px;
-  }
-  
-  #lecture-input {
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    margin-right: 10px;
-  }
-  
-  #add-lecture-btn {
-    padding: 5px 10px;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  #add-lecture-btn:hover {
-    background: #0056b3;
-  }
-  
-  .lecture-card {
-    background: white;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .lecture-card button {
-    background: #ff4d4d;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 5px 10px;
-    cursor: pointer;
-  }
-  
-  .lecture-card button:hover {
-    background: #cc0000;
-  }
-  #lecture-dock {
-    position: fixed;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    max-width: 1200px;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 10px;
-    border-radius: 10px;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    z-index: 10;
-  }
-  
-  #input-container {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  
-  #subject-input, #division-input {
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    width: 200px;
-  }
-  
-  #add-lecture-btn {
-    padding: 5px 15px;
-    background: #28a745;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s;
-  }
-  
-  #add-lecture-btn:hover {
-    background: #218838;
-  }
-  
-  #lecture-cards {
-    display: flex;
-    gap: 10px;
-    overflow-x: auto;
-    width: 100%;
-    padding: 5px;
-  }
-  
-  .lecture-card {
-    background: #fff;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    min-width: 200px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s;
-  }
-  
-  .lecture-card:hover {
-    transform: scale(1.05);
-  }
-  
-  .lecture-card button {
-    background: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 5px 10px;
-    cursor: pointer;
-    margin-top: 5px;
-    transition: background 0.3s;
-    }
-    
-    .lecture-card button:hover {
-    background: #c82333;
-    }
+  margin: 0;
+  overflow: hidden;
+  text-align: center;
+  font-size: 12px;
+  font-family: Sans-Serif;
+  color: #444;
+}
+
+h1 {
+  position: absolute;
+  width: 100%;
+  z-index: 1;
+}
+
+#scene-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: skyblue;
+}
+
+#lecture-cards-container {
+  position: absolute;
+  top: 80px;
+  right: 1100px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#lecture-dock {
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 1200px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 10;
+}
+
+#input-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+#subject-input,
+#division-select,
+#lecture-select {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 200px;
+}
+
+#division-config {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+#division-count {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+#update-divisions-btn {
+  padding: 5px 15px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+#update-divisions-btn:hover {
+  background: #0056b3;
+}
+
+#add-lecture-btn {
+  padding: 5px 15px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+#add-lecture-btn:hover {
+  background: #218838;
+}
+
+#lecture-cards {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  width: 100%;
+  padding: 5px;
+}
+
+.lecture-card {
+  background: #fff;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.lecture-card:hover {
+  transform: scale(1.05);
+}
+
+.lecture-card button {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  margin-top: 5px;
+  transition: background 0.3s;
+}
+
+.lecture-card button:hover {
+  background: #c82333;
+}
