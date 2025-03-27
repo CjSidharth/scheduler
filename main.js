@@ -202,7 +202,7 @@ for (let floor = 0; floor < totalFloors; floor++) {
 
 scene.add(building);
 
-scene.fog = new THREE.Fog(0x87ceeb, 10, 50);
+scene.fog = new THREE.Fog(0x87ceeb, 20, 100);
 scene.background = new THREE.Color(0x87ceeb);
 
 const gridHelper = new THREE.GridHelper(100, 20, 0x444444, 0x444444);
