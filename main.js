@@ -312,6 +312,15 @@ window.addEventListener('click', onMouseClick);
 
 function animate() {
   requestAnimationFrame(animate);
+  
+  // Animate path lines
+  const time = Date.now() * 0.001;
+  pathLines.forEach(line => {
+    if (line.material) {
+      line.material.opacity = 0.6 + Math.sin(time + line.userData.animationOffset) * 0.4;
+    }
+  });
+
   controls.update();
   renderer.render(scene, camera);
 }
@@ -483,6 +492,7 @@ function scheduleLectures() {
     return;
   }
 
+  // Clear existing paths and labels
   pathLines.forEach(line => scene.remove(line));
   pathLines = [];
   rooms.forEach(room => {
@@ -492,60 +502,87 @@ function scheduleLectures() {
     }
   });
 
-  lectures.sort((a, b) => a.division.localeCompare(b.division));
-
-  let scheduledLectures = [];
-  let availableRooms = rooms.filter(r => r.userData.status === 'Available');
-
-  lectures.forEach((lecture, index) => {
-    let bestRoom;
-    if (lecture.room) {
-      bestRoom = lecture.room;
-      if (bestRoom.userData.status === 'Occupied' && bestRoom !== lecture.room) {
-        alert(`Room on Floor ${bestRoom.userData.floor + 1}, ${bestRoom.userData.name} is already occupied!`);
-        return;
-      }
-    } else {
-      if (!availableRooms.length) {
-        alert('Not enough available rooms!');
-        return;
-      }
-      bestRoom = availableRooms.reduce((best, current) => {
-        const bestDist = scheduledLectures.length > 0 ? 
-          Math.abs(best.userData.floor - scheduledLectures[scheduledLectures.length - 1].room.userData.floor) : 
-          Infinity;
-        const currDist = scheduledLectures.length > 0 ? 
-          Math.abs(current.userData.floor - scheduledLectures[scheduledLectures.length - 1].room.userData.floor) : 
-          Infinity;
-        return currDist < bestDist ? current : best;
-      }, availableRooms[0]);
+  // Group lectures by division
+  const lecturesByDivision = {};
+  lectures.forEach(lecture => {
+    if (!lecturesByDivision[lecture.division]) {
+      lecturesByDivision[lecture.division] = [];
     }
-
-    bestRoom.userData.status = 'Occupied';
-    bestRoom.material.color.setHex(0xff0000);
-    lecture.room = bestRoom;
-    scheduledLectures.push({ ...lecture, sequence: index + 1 });
-    availableRooms = availableRooms.filter(r => r !== bestRoom);
-
-    lecture.card.firstChild.textContent = `${lecture.subject} (${lecture.division}) - ${lecture.lecture} - Floor ${bestRoom.userData.floor + 1}, ${bestRoom.userData.name}`;
-
-    const labelPos = bestRoom.position.clone().add(new THREE.Vector3(0, 1.5, 0));
-    const labelText = `${lecture.subject} (${lecture.division}) - ${lecture.lecture}`;
-    const label = createTextLabel(labelText, labelPos);
-    scene.add(label);
-    bestRoom.userData.label = label;
+    lecturesByDivision[lecture.division].push(lecture);
   });
 
-  scheduledLectures.sort((a, b) => a.sequence - b.sequence);
-  for (let i = 0; i < scheduledLectures.length - 1; i++) {
-    const start = scheduledLectures[i].room.position.clone();
-    const end = scheduledLectures[i + 1].room.position.clone();
-    const pathGeometry = new THREE.BufferGeometry().setFromPoints([start, end]);
-    const pathMaterial = new THREE.LineBasicMaterial({ color: 0xffff00, linewidth: 2 });
-    const pathLine = new THREE.Line(pathGeometry, pathMaterial);
-    scene.add(pathLine);
-    pathLines.push(pathLine);
-  }
+  // Define colors for different divisions
+  const divisionColors = [
+    0xffff00, // Yellow
+    0xff00ff, // Magenta
+    0x00ffff, // Cyan
+    0xff8000, // Orange
+    0x8000ff  // Purple
+  ];
+
+  // Process each division separately
+  Object.keys(lecturesByDivision).forEach((division, divisionIndex) => {
+    const divisionLectures = lecturesByDivision[division];
+    divisionLectures.sort((a, b) => a.lecture.localeCompare(b.lecture));
+    
+    let scheduledLectures = [];
+    let availableRooms = rooms.filter(r => r.userData.status === 'Available');
+    const divisionColor = divisionColors[divisionIndex % divisionColors.length];
+
+    divisionLectures.forEach((lecture, index) => {
+      let bestRoom;
+      if (lecture.room) {
+        bestRoom = lecture.room;
+        if (bestRoom.userData.status === 'Occupied' && bestRoom !== lecture.room) {
+          alert(`Room on Floor ${bestRoom.userData.floor + 1}, ${bestRoom.userData.name} is already occupied!`);
+          return;
+        }
+      } else {
+        if (!availableRooms.length) {
+          alert(`Not enough available rooms for division ${division}!`);
+          return;
+        }
+        bestRoom = availableRooms.reduce((best, current) => {
+          const bestDist = scheduledLectures.length > 0 ? 
+            Math.abs(best.userData.floor - scheduledLectures[scheduledLectures.length - 1].room.userData.floor) : 
+            Infinity;
+          const currDist = scheduledLectures.length > 0 ? 
+            Math.abs(current.userData.floor - scheduledLectures[scheduledLectures.length - 1].room.userData.floor) : 
+            Infinity;
+          return currDist < bestDist ? current : best;
+        }, availableRooms[0]);
+      }
+
+      bestRoom.userData.status = 'Occupied';
+      bestRoom.material.color.setHex(0xff0000);
+      lecture.room = bestRoom;
+      scheduledLectures.push({ ...lecture, sequence: index + 1 });
+      availableRooms = availableRooms.filter(r => r !== bestRoom);
+
+      lecture.card.firstChild.textContent = `${lecture.subject} (${lecture.division}) - ${lecture.lecture} - Floor ${bestRoom.userData.floor + 1}, ${bestRoom.userData.name}`;
+
+      const labelPos = bestRoom.position.clone().add(new THREE.Vector3(0, 1.5, 0));
+      const labelText = `${lecture.subject} (${lecture.division}) - ${lecture.lecture}`;
+      const label = createTextLabel(labelText, labelPos);
+      scene.add(label);
+      bestRoom.userData.label = label;
+    });
+
+    // Create path for this division
+    scheduledLectures.sort((a, b) => a.sequence - b.sequence);
+    for (let i = 0; i < scheduledLectures.length - 1; i++) {
+      const start = scheduledLectures[i].room.position.clone();
+      const end = scheduledLectures[i + 1].room.position.clone();
+      const pathGeometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+      const pathMaterial = new THREE.LineBasicMaterial({ 
+        color: divisionColor, 
+        linewidth: 2
+      });
+      const pathLine = new THREE.Line(pathGeometry, pathMaterial);
+      scene.add(pathLine);
+      pathLines.push(pathLine);
+    }
+  });
 
   createFloorPlanElements();
 }
