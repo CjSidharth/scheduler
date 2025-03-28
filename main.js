@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 // Set up the scene, camera, and renderer
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.5, 500);
-const renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer({antialias: true});
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.sortObjects = true;
 renderer.shadowMap.enabled = true;
@@ -93,15 +93,15 @@ const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 directionalLight.position.set(10, 20, 10);
 directionalLight.castShadow = true;
 directionalLight.intensity = 1.5;
-directionalLight.shadow.mapSize.width = 2048;
-directionalLight.shadow.mapSize.height = 2048;
+directionalLight.shadow.bias = -0.001; // Slightly larger negative bias to reduce artifacts
+directionalLight.shadow.mapSize.width = 4096; // Higher resolution for sharper shadows
+directionalLight.shadow.mapSize.height = 4096;
 directionalLight.shadow.camera.near = 0.5;
 directionalLight.shadow.camera.far = 50;
 directionalLight.shadow.camera.left = -10;
 directionalLight.shadow.camera.right = 10;
 directionalLight.shadow.camera.top = 10;
 directionalLight.shadow.camera.bottom = -10;
-directionalLight.shadow.bias = -0.0001;
 scene.add(directionalLight);
 
 // Add a ground plane
@@ -173,6 +173,7 @@ for (let floor = 0; floor < totalFloors; floor++) {
       clearcoat: 0.5,
       clearcoatRoughness: 0.1,
       side: THREE.DoubleSide,
+      depthWrite: false, // Prevent writing to depth buffer
     });
     const roomMesh = new THREE.Mesh(roomGeometry, roomMaterial);
     roomMesh.position.set(pos.x, floor * floorHeight + roomHeight / 2 + 0.15, pos.z);
@@ -721,7 +722,8 @@ navbar.style.color = 'white';
 navbar.style.display = 'flex';
 navbar.style.alignItems = 'center';
 navbar.style.padding = '0 20px';
-navbar.innerHTML = '<h2>Lecture Scheduler</h2>';
+navbar.innerHTML = '<img src="/assets/schedule.png" style="margin-right: 10px;" height="35" width="35"> <h2>Lecture Scheduler</h2>';
+navbar.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
 document.body.appendChild(navbar);
 
 function scheduleLectures() {
