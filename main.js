@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
+
+
 // Set up the scene, camera, and renderer
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.5, 500);
@@ -9,7 +11,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.sortObjects = true;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.setClearColor(0x87ceeb, 1);
+renderer.setClearColor(0x87CEEB, 1);
 document.body.appendChild(renderer.domElement);
 
 // Create UI container for floor plan
@@ -81,6 +83,7 @@ uiContainer.appendChild(roomInfoDisplay);
 // Add OrbitControls
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
+controls.maxPolarAngle = Math.PI/(2.5); // Doesn't allow rotation
 
 // Add lighting
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -201,8 +204,11 @@ for (let floor = 0; floor < totalFloors; floor++) {
 
 scene.add(building);
 
-scene.fog = new THREE.Fog(0x87ceeb, 20, 100);
-scene.background = new THREE.Color(0x87ceeb);
+// Replace your current fog/background setup with:
+scene.background = new THREE.Color(0x87CEEB); // Sky blue
+scene.fog = new THREE.FogExp2(0x87CEEB, 0.015); // Exponential fog for smoother transition
+
+// Adjust your clear color to match:
 
 const gridHelper = new THREE.GridHelper(100, 20, 0x444444, 0x444444);
 gridHelper.position.y = -0.15;
