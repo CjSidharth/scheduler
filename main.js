@@ -94,8 +94,8 @@ directionalLight.position.set(10, 20, 10);
 directionalLight.castShadow = true;
 directionalLight.intensity = 1.5;
 directionalLight.shadow.bias = -0.001; // Slightly larger negative bias to reduce artifacts
-directionalLight.shadow.mapSize.width = 4096; // Higher resolution for sharper shadows
-directionalLight.shadow.mapSize.height = 4096;
+directionalLight.shadow.mapSize.width = 1024; // Higher resolution for sharper shadows
+directionalLight.shadow.mapSize.height = 1024;
 directionalLight.shadow.camera.near = 0.5;
 directionalLight.shadow.camera.far = 50;
 directionalLight.shadow.camera.left = -10;
