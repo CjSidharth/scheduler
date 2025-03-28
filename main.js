@@ -90,7 +90,6 @@ scene.add(hemisphereLight);
 const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 directionalLight.position.set(10, 20, 10);
 directionalLight.castShadow = true;
-scene.add(directionalLight);
 directionalLight.intensity = 1.5;
 directionalLight.shadow.mapSize.width = 2048;
 directionalLight.shadow.mapSize.height = 2048;
@@ -101,11 +100,9 @@ directionalLight.shadow.camera.right = 10;
 directionalLight.shadow.camera.top = 10;
 directionalLight.shadow.camera.bottom = -10;
 directionalLight.shadow.bias = -0.001;
+scene.add(directionalLight);
 
-const pointLight = new THREE.PointLight(0xffffff, 1, 50);
-pointLight.position.set(5, 10, 5);
-pointLight.castShadow = true;
-scene.add(pointLight);
+
 
 // Add a ground plane
 const groundGeometry = new THREE.PlaneGeometry(100, 100);
@@ -148,7 +145,8 @@ for (let floor = 0; floor < totalFloors; floor++) {
   const floorMaterial = new THREE.MeshPhongMaterial({
     color: 0xcccccc,
     shininess: 100,
-  });  
+  });
+  
   const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
   floorMesh.position.y = floor * floorHeight;
   floorMesh.receiveShadow = true;
@@ -168,7 +166,7 @@ for (let floor = 0; floor < totalFloors; floor++) {
   positions.forEach((pos, index) => {
     const roomGeometry = new THREE.BoxGeometry(roomWidth, roomHeight, roomDepth);
     const roomMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0x00ff00,
+      color: 0x4CAF50,
       transparent: true,
       opacity: 0.6,
       roughness: 0.2,
@@ -187,7 +185,7 @@ for (let floor = 0; floor < totalFloors; floor++) {
     roomMesh.userData = {
       floor: floor,
       room: index,
-      originalColor: 0x00ff00,
+      originalColor: 0x4CAF50,
       isSelected: false,
       name: `Room ${index + 1}`,
       capacity: Math.floor(Math.random() * 30) + 20,
@@ -259,20 +257,20 @@ function selectRoom(roomMesh) {
     currentlySelected.userData.isSelected = false;
     currentlySelected.material.color.setHex(
       currentlySelected.userData.status === 'Available' ? 
-      0x00ff00 : 0xff0000
+      0x4CAF50 : 0xF44336
     );
   }
 
   if (!roomMesh.userData.isSelected) {
     roomMesh.userData.isSelected = true;
-    roomMesh.material.color.setHex(0xffff00); // Yellow for selection
+    roomMesh.material.color.setHex(0xFFB300); // Yellow for selection
     currentlySelected = roomMesh;
     selectedRooms = [roomMesh];
   } else {
     roomMesh.userData.isSelected = false;
     roomMesh.material.color.setHex(
       roomMesh.userData.status === 'Available' ? 
-      0x00ff00 : 0xff0000
+      0x4CAF50 : 0xF44336
     );
     currentlySelected = null;
     selectedRooms = [];
@@ -381,7 +379,7 @@ window.addEventListener('load', () => {
       const room = rooms.find(r => r.userData.floor === lecture.room.userData.floor && r.userData.room === lecture.room.userData.room);
       if (room) {
         room.userData.status = 'Occupied';
-        room.material.color.setHex(0xff0000);
+        room.material.color.setHex(0xF44336);
       }
     }
   });
@@ -436,7 +434,7 @@ addLectureBtn.addEventListener('click', () => {
     if (selectedRoom) {
       selectedRoom.userData.status = 'Occupied';
       selectedRoom.userData.isSelected = false;
-      selectedRoom.material.color.setHex(0xff0000);
+      selectedRoom.material.color.setHex(0xF44336);
       currentlySelected = null;
       selectedRooms = [];
     }
@@ -460,7 +458,8 @@ navbar.style.color = 'white';
 navbar.style.display = 'flex';
 navbar.style.alignItems = 'center';
 navbar.style.padding = '0 20px';
-navbar.innerHTML = '<h2>Lecture Scheduler</h2>';
+navbar.innerHTML = '<img src="/assets/schedule.png" style="margin-right: 10px;" height="35" width="35"> <h2>Lecture Scheduler</h2>';
+navbar.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
 document.body.appendChild(navbar);
 
 let pathLines = [];
@@ -554,7 +553,7 @@ function scheduleLectures() {
       }
 
       bestRoom.userData.status = 'Occupied';
-      bestRoom.material.color.setHex(0xff0000);
+      bestRoom.material.color.setHex(0xF44336);
       lecture.room = bestRoom;
       scheduledLectures.push({ ...lecture, sequence: index + 1 });
       availableRooms = availableRooms.filter(r => r !== bestRoom);

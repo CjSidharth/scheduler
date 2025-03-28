@@ -1,11 +1,25 @@
+:root {
+  --primary: #1E88E5;
+  --secondary: #455A64;
+  --accent: #FDD835;
+  --success: #43A047;
+  --danger: #E53935;
+  --bg: #ECEFF1;
+}
+
+
+
 body {
   margin: 0;
   overflow: hidden;
   text-align: center;
-  font-size: 12px;
-  font-family: Sans-Serif;
-  color: #444;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  background: linear-gradient(var(--bg), #B0BEC5);
+  color: var(--secondary);
 }
+
+
 
 h1 {
   position: absolute;
@@ -17,7 +31,7 @@ h1 {
   position: absolute;
   width: 100%;
   height: 100%;
-  background-color: skyblue;
+  background: none;
 }
 
 #lecture-cards-container {
@@ -45,6 +59,8 @@ h1 {
   flex-direction: column;
   align-items: center;
   z-index: 10;
+  
+  
 }
 
 #input-container {
@@ -142,3 +158,9 @@ h1 {
 .lecture-card button:hover {
   background: #c82333;
 }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.lecture-card { animation: fadeIn 0.3s ease-in; }
