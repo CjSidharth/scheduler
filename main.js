@@ -571,7 +571,7 @@ function enableEditModeForCard(card, lectureData) {
   divisionSelectEdit.style.margin = '2px';
 
   const lectureSelectEdit = document.createElement('select');
-  ['Lecture 1', 'Lecture 2', 'Lecture 3', 'Lecture 4', 'Lecture 5'].forEach(lec => {
+  ['Lecture 1', 'Lecture 2', 'Lecture 3', 'Lecture 4'].forEach(lec => {
     const option = document.createElement('option');
     option.value = lec;
     option.textContent = lec;
@@ -688,7 +688,7 @@ addLectureBtn.addEventListener('click', () => {
       l.division === division && l.lecture === lecture
     );
     if (exists) {
-      alert(`Lecture ${lecture} for ${division} already exists! Each division can only have one lecture per lecture number.`);
+      alert(`${lecture} for ${division} already exists! Each division can only have one lecture per lecture number.`);
       return;
     }
 
@@ -877,7 +877,7 @@ function exportToPDF() {
   doc.text('Lecture Schedule Timetable', 14, 20);
 
   const divisions = [...new Set(lectures.map(l => l.division))].sort();
-  const lectureNumbers = ['Lecture 1', 'Lecture 2', 'Lecture 3', 'Lecture 4', 'Lecture 5'];
+  const lectureNumbers = ['Lecture 1', 'Lecture 2', 'Lecture 3', 'Lecture 4'];
   const tableData = [];
 
   divisions.forEach(division => {
