@@ -1,10 +1,12 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
+
+
 // Set up the scene, camera, and renderer
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.5, 500);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({antialias: true});
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.sortObjects = true;
 renderer.shadowMap.enabled = true;
@@ -81,7 +83,7 @@ uiContainer.appendChild(roomInfoDisplay);
 // Add OrbitControls
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.maxPolarAngle = Math.PI / 2.5;
+controls.maxPolarAngle = Math.PI/(2.2); // Doesn't allow rotation
 
 // Add lighting
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -94,8 +96,8 @@ const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 directionalLight.position.set(10, 20, 10);
 directionalLight.castShadow = true;
 directionalLight.intensity = 1.5;
-directionalLight.shadow.bias = -0.001;
-directionalLight.shadow.mapSize.width = 1024;
+directionalLight.shadow.bias = -0.001; // Slightly larger negative bias to reduce artifacts
+directionalLight.shadow.mapSize.width = 1024; // Higher resolution for sharper shadows
 directionalLight.shadow.mapSize.height = 1024;
 directionalLight.shadow.camera.near = 0.5;
 directionalLight.shadow.camera.far = 50;
@@ -135,7 +137,7 @@ const floorRooms = Array(totalFloors).fill().map(() => []);
 // In-memory store for lectures
 window.lectureStore = window.lectureStore || [];
 
-// Create each floor with initial scale for animation
+// Create each floor
 for (let floor = 0; floor < totalFloors; floor++) {
   const option = document.createElement('option');
   option.value = floor;
@@ -150,8 +152,6 @@ for (let floor = 0; floor < totalFloors; floor++) {
   const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
   floorMesh.position.y = floor * floorHeight;
   floorMesh.receiveShadow = true;
-  floorMesh.scale.y = 0; // Start with zero height for animation
-  floorMesh.userData = { targetScaleY: 1, animationStart: floor * 0.3 }; // Stagger animation start
   building.add(floorMesh);
 
   const roomWidth = buildingWidth / 2 - 0.2;
@@ -176,7 +176,7 @@ for (let floor = 0; floor < totalFloors; floor++) {
       clearcoat: 0.5,
       clearcoatRoughness: 0.1,
       side: THREE.DoubleSide,
-      depthWrite: false,
+      depthWrite: false, // Prevent writing to depth buffer
     });
     const roomMesh = new THREE.Mesh(roomGeometry, roomMaterial);
     roomMesh.position.set(pos.x, floor * floorHeight + roomHeight / 2 + 0.15, pos.z);
@@ -192,12 +192,9 @@ for (let floor = 0; floor < totalFloors; floor++) {
       originalColor: 0x4CAF50,
       isSelected: false,
       name: `Room ${index + 1}`,
+      capacity: Math.floor(Math.random() * 30) + 20,
       occupiedLectures: [],
-      targetScaleY: 1,
-      animationStart: floor * 0.3, // Stagger animation start
     };
-
-    roomMesh.scale.y = 0; // Start with zero height for animation
 
     building.add(roomMesh);
     rooms.push(roomMesh);
@@ -207,9 +204,11 @@ for (let floor = 0; floor < totalFloors; floor++) {
 
 scene.add(building);
 
-// Scene background and fog
-scene.background = new THREE.Color(0x87CEEB);
-scene.fog = new THREE.FogExp2(0x87CEEB, 0.015);
+// Replace your current fog/background setup with:
+scene.background = new THREE.Color(0x87CEEB); // Sky blue
+scene.fog = new THREE.FogExp2(0x87CEEB, 0.015); // Exponential fog for smoother transition
+
+// Adjust your clear color to match:
 
 const gridHelper = new THREE.GridHelper(100, 20, 0x444444, 0x444444);
 gridHelper.position.y = -0.15;
@@ -270,7 +269,7 @@ function selectRoom(roomMesh) {
 
   if (!roomMesh.userData.isSelected) {
     roomMesh.userData.isSelected = true;
-    roomMesh.material.color.setHex(0xFFB300);
+    roomMesh.material.color.setHex(0xFFB300); // Yellow for selection
     currentlySelected = roomMesh;
     selectedRooms = [roomMesh];
   } else {
@@ -286,6 +285,7 @@ function selectRoom(roomMesh) {
     roomInfoDisplay.style.display = 'block';
     roomInfoDisplay.innerHTML = `
       <strong>Floor ${roomMesh.userData.floor + 1}, ${roomMesh.userData.name}</strong><br>
+      Capacity: ${roomMesh.userData.capacity} people<br>
       Occupied for Lectures: ${roomMesh.userData.occupiedLectures.length > 0 ? roomMesh.userData.occupiedLectures.join(', ') : 'None'}
     `;
   } else {
@@ -348,45 +348,12 @@ function animate() {
   requestAnimationFrame(animate);
 
   const time = Date.now() * 0.001;
-
-  // Building load animation
-  building.children.forEach(mesh => {
-    if (mesh.userData.targetScaleY) {
-      const startTime = mesh.userData.animationStart || 0;
-      const elapsed = time - startTime;
-      const duration = 1; // Animation duration in seconds
-      if (elapsed < duration) {
-        const progress = elapsed / duration;
-        // Ease-in-out for smooth animation
-        const easedProgress = progress < 0.5
-          ? 2 * progress * progress
-          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-        mesh.scale.y = easedProgress * mesh.userData.targetScaleY;
-      } else {
-        mesh.scale.y = mesh.userData.targetScaleY;
-      }
-    }
-  });
-
-  // Path line animation
   pathLines.forEach(line => {
     if (line.material) {
-      // Opacity animation
       line.material.opacity = 0.6 + Math.sin(time + (line.userData.animationOffset || 0)) * 0.4;
-      // Dash animation
-      const elapsed = time - (line.userData.animationStart || 0);
-      const duration = 2; // Animation duration in seconds
-      if (elapsed < duration) {
-        const progress = elapsed / duration;
-        line.material.dashOffset = (1 - progress) * line.userData.totalLength;
-        line.material.needsUpdate = true;
-      } else {
-        line.material.dashOffset = 0;
-      }
     }
   });
 
-  // Label animation
   scene.traverse(object => {
     if (object.isSprite && object.userData.roomZ !== undefined) {
       object.lookAt(camera.position);
@@ -604,7 +571,7 @@ function enableEditModeForCard(card, lectureData) {
   divisionSelectEdit.style.margin = '2px';
 
   const lectureSelectEdit = document.createElement('select');
-  ['Lecture 1', 'Lecture 2', 'Lecture 3', 'Lecture 4'].forEach(lec => {
+  ['Lecture 1', 'Lecture 2', 'Lecture 3', 'Lecture 4', 'Lecture 5'].forEach(lec => {
     const option = document.createElement('option');
     option.value = lec;
     option.textContent = lec;
@@ -840,22 +807,9 @@ function scheduleLectures() {
       const start = scheduledLectures[i].room.position.clone();
       const end = scheduledLectures[i + 1].room.position.clone();
       const pathGeometry = new THREE.BufferGeometry().setFromPoints([start, end]);
-      const pathMaterial = new THREE.LineDashedMaterial({
-        color: divisionColor,
-        linewidth: 2,
-        dashSize: 0.5,
-        gapSize: 0.5,
-        transparent: true,
-        opacity: 0.6,
-      });
+      const pathMaterial = new THREE.LineBasicMaterial({ color: divisionColor, linewidth: 2 });
       const pathLine = new THREE.Line(pathGeometry, pathMaterial);
-      pathLine.computeLineDistances(); // Required for dashed lines
-      const totalLength = pathLine.geometry.attributes.lineDistance.array[pathLine.geometry.attributes.lineDistance.count - 1];
-      pathLine.userData = {
-        animationOffset: i,
-        animationStart: Date.now() * 0.001,
-        totalLength: totalLength,
-      };
+      pathLine.userData.animationOffset = i;
       scene.add(pathLine);
       pathLines.push(pathLine);
     }
@@ -883,9 +837,6 @@ function resetSchedule() {
       scene.remove(room.userData.label);
       room.userData.label = null;
     }
-    // Reset scale for re-animation on next load
-    room.scale.y = 0;
-    room.userData.animationStart = room.userData.floor * 0.3;
   });
 
   scene.children.forEach(object => {
@@ -926,7 +877,7 @@ function exportToPDF() {
   doc.text('Lecture Schedule Timetable', 14, 20);
 
   const divisions = [...new Set(lectures.map(l => l.division))].sort();
-  const lectureNumbers = ['Lecture 1', 'Lecture 2', 'Lecture 3', 'Lecture 4'];
+  const lectureNumbers = ['Lecture 1', 'Lecture 2', 'Lecture 3', 'Lecture 4', 'Lecture 5'];
   const tableData = [];
 
   divisions.forEach(division => {
