@@ -487,8 +487,11 @@ window.addEventListener('load', () => {
       if (lecture.room) {
         const room = rooms.find(r => r.userData.floor === lecture.room.userData.floor && r.userData.room === lecture.room.userData.room);
         if (room) {
-          room.userData.occupiedLectures.push(lecture.lecture);
-          room.material.color.setHex(0xF44336);
+          // Only add if not already present
+          if (!room.userData.occupiedLectures.includes(lecture.lecture)) {
+            room.userData.occupiedLectures.push(lecture.lecture);
+            room.material.color.setHex(0xF44336);
+          }
         }
       }
     });
@@ -505,22 +508,22 @@ function createLectureCard(subject, division, lecture, room = null, addToLecture
     ? `${subject} (${division}) - ${lecture} - Floor ${room.userData.floor + 1}, ${room.userData.name}`
     : `${subject} (${division}) - ${lecture}`;
 
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = 'Close';
-  closeBtn.addEventListener('click', () => {
-    if (room) {
-      room.userData.occupiedLectures = room.userData.occupiedLectures.filter(l => l !== lecture);
-      room.material.color.setHex(room.userData.occupiedLectures.length === 0 ? room.userData.originalColor : 0xF44336);
-      if (room.userData.occupiedLectures.length === 0 && room.userData.label) {
-        scene.remove(room.userData.label);
-        room.userData.label = null;
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close';
+    closeBtn.addEventListener('click', () => {
+      if (room) {
+        room.userData.occupiedLectures = room.userData.occupiedLectures.filter(l => l !== lecture);
+        room.material.color.setHex(room.userData.occupiedLectures.length === 0 ? room.userData.originalColor : 0xF44336);
+        if (room.userData.occupiedLectures.length === 0 && room.userData.label) {
+          scene.remove(room.userData.label);
+          room.userData.label = null;
+        }
+        createFloorPlanElements();
       }
-      createFloorPlanElements();
-    }
-    lectureCardsContainer.removeChild(card);
-    lectures = lectures.filter(l => l.card !== card);
-    window.lectureStore = lectures;
-  });
+      lectureCardsContainer.removeChild(card);
+      lectures = lectures.filter(l => l.card !== card);
+      window.lectureStore = lectures;
+    });
 
   card.appendChild(lectureText);
   card.appendChild(closeBtn);
@@ -698,13 +701,15 @@ addLectureBtn.addEventListener('click', () => {
         alert(`This room is already occupied for ${lecture}! Please select a different room or lecture number.`);
         return;
       }
+      if (!selectedRoom.userData.occupiedLectures.includes(lecture)) {
+        selectedRoom.userData.occupiedLectures.push(lecture);
+        selectedRoom.material.color.setHex(0xF44336);
+      }
     }
 
     const card = createLectureCard(subject, division, lecture, selectedRoom);
     lectureCardsContainer.appendChild(card);
     if (selectedRoom) {
-      selectedRoom.userData.occupiedLectures.push(lecture);
-      selectedRoom.material.color.setHex(0xF44336);
       currentlySelected = null;
       selectedRooms = [];
     }
@@ -745,6 +750,9 @@ function scheduleLectures() {
       scene.remove(room.userData.label);
       room.userData.label = null;
     }
+    // Clear occupiedLectures before rescheduling
+    room.userData.occupiedLectures = [];
+    room.material.color.setHex(room.userData.originalColor);
   });
 
   const lecturesByDivision = {};
@@ -755,7 +763,7 @@ function scheduleLectures() {
     lecturesByDivision[lecture.division].push(lecture);
   });
 
-  const divisionColors = [0xffff00, 0xff00ff, 0x00ffff, 0xff8000, 0x8000ff];
+  const divisionColors = [0xffff00, 0x00ff00, 0x00ffff, 0xffffff, 0xff00ff];
 
   Object.keys(lecturesByDivision).forEach((division, divisionIndex) => {
     const divisionLectures = lecturesByDivision[division];
@@ -786,7 +794,10 @@ function scheduleLectures() {
         return;
       }
 
-      bestRoom.userData.occupiedLectures.push(lecture.lecture);
+      // Add lecture only if not already present
+      if (!bestRoom.userData.occupiedLectures.includes(lecture.lecture)) {
+        bestRoom.userData.occupiedLectures.push(lecture.lecture);
+      }
       bestRoom.material.color.setHex(0xF44336);
       lecture.room = bestRoom;
       scheduledLectures.push({ ...lecture, sequence: index + 1 });
